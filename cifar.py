@@ -55,19 +55,23 @@ with tf.variable_scope("fc1"):
 
 # dropout layer (with variable dropout rate)
 keep_prob = tf.placeholder(tf.float32)
-h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+# h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 with tf.variable_scope("fc2"):
-    y_conv = fully_connected(h_fc1_drop, 1024, 10)
+    y_conv = fully_connected(h_fc1, 1024, 10)
+
+# y_conv = tf.Print(y_conv, [y_, y_conv, h_pool1, h_pool2])
 
 # calculate cross entropy on softmax (logits refers to the use of logs
 # on calclulations, meaning those are stable calcs)
 y_ = tf.cast(y_, tf.int64)
 # cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
 cross_entropy = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(y_conv, y_))
+tf.add_to_collection('losses', cross_entropy)
+loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
 
 # setup an Adam optimizer to minimize the just-calculated cross entropy
-train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(1e-5).minimize(loss)
 # train_step = tf.train.GradientDescentOptimizer(1e-5).minimize(cross_entropy)
 
 # add an extra end node to the graph representing accuracy
@@ -88,12 +92,12 @@ with sess.as_default():
     tf.train.start_queue_runners()
 
     # run for 20k epochs
-    for i in range(500):
+    for i in range(300):
 
         # check accuracy
         if i%10 == 0:
             train_acurracy = np.sum(top_k_op.eval(feed_dict={keep_prob: 1.0, select_test: False}))/FLAGS.batch_size
-            train_error = cross_entropy.eval(feed_dict={keep_prob: 1.0, select_test: False})
+            train_error = loss.eval(feed_dict={keep_prob: 1.0, select_test: False})
 
             print("%d, %g, %g"%(i, train_error, train_acurracy))
 
@@ -103,8 +107,8 @@ with sess.as_default():
     print ("test error, test accuracy")
     # final accuracy (test)
     for i in range(100):
-        acc, error = sess.run([top_k_op, cross_entropy], feed_dict={keep_prob: 1.0, select_test: True})
+        acc, error = sess.run([top_k_op, loss], feed_dict={keep_prob: 1.0, select_test: True})
         acc = np.sum(acc)/FLAGS.batch_size
         # acc = np.sum(top_k_op.run(feed_dict={keep_prob: 1.0, select_test: True}))/FLAGS.batch_size
-        # error = cross_entropy.run(feed_dict={keep_prob: 1.0, select_test: True})
+        # error = loss.run(feed_dict={keep_prob: 1.0, select_test: True})
         print("%g, %g"%(error, acc))
