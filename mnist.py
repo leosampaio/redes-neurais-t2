@@ -19,12 +19,12 @@ x_image = tf.reshape(x, [-1,28,28,1])
 # first convolutional layer
 with tf.variable_scope("conv1"):
     h_conv1 = conv2D(x_image, [5, 5, 1, 32], [32])
-    h_pool1 = max_pool_2x2(h_conv1)
+    h_pool1 = max_pool(h_conv1, 2)
 
 # second convolutional layer
 with tf.variable_scope("conv2"):
     h_conv2 = conv2D(h_pool1, [5, 5, 32, 64], [64])
-    h_pool2 = max_pool_2x2(h_conv2)
+    h_pool2 = max_pool(h_conv2, 2)
 
 # fully connected layers
 
@@ -60,6 +60,9 @@ sess.run(tf.initialize_all_variables())
 
 with sess.as_default():
 
+    # header of csv style output format
+    print("epoch, training accuracy")
+
     # run for 20k epochs
     for i in range(20000):
         # with batch size of 50
@@ -69,7 +72,7 @@ with sess.as_default():
         if i%100 == 0:
             train_accuracy = accuracy.eval(feed_dict={
                 x:batch[0], y_: batch[1], keep_prob: 1.0})
-            print("step %d, training accuracy %g"%(i, train_accuracy))
+            print("%d, %g"%(i, train_accuracy))
 
         # run optimizer on batch
         train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})

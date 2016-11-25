@@ -22,6 +22,6 @@ def fully_connected(x, input_size, output_size):
     activation = tf.nn.relu(tf.matmul(x, weights) + biases)
     return activation
 
-def max_pool_2x2(x):
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                        strides=[1, 2, 2, 1], padding='SAME')
+def max_pool(x, size_n_stride):
+  return tf.nn.max_pool(x, ksize=[1, size_n_stride, size_n_stride, 1],
+                        strides=[1, size_n_stride, size_n_stride, 1], padding='SAME')
